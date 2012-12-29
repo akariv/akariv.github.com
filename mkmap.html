@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+.node {
+  stroke: #fff;
+  stroke-width: 1.5px;
+}
+
+.link {
+  stroke: #999;
+  stroke-opacity: .6;
+}
+
+</style>
+<body>
+<div>Number of links: <div id="bill-num"></div></div>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script>
+
+var width = 960,
+    height = 500;
+
+var color = d3.scale.category20();
+
+var force = d3.layout.force()
+    .charge(-120)
+    .linkDistance(30)
+    .size([width, height]);
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+var OKNESSET = "http://oknesset.org";
+
+function start_force(data) {
+  force
+      .nodes(nodes)
+      .links(links)
+      .start();
+
+  var link = svg.selectAll("line.link")
+      .data(links)
+    .enter().append("line")
+      .attr("class", "link")
+      .style("stroke-width", function(d) { return Math.sqrt(d.value); });
+
+  var node = svg.selectAll("circle.node")
+      .data(nodes)
+    .enter().append("circle")
+      .attr("class", "node")
+      .attr("r", 5)
+      .style("fill", function(d) { return color(d.group); })
+      .call(force.drag);
+
+  node.append("title")
+      .text(function(d) { return d.name; });
+
+  force.on("tick", function() {
+    link.attr("x1", function(d) { return d.source.x; })
+        .attr("y1", function(d) { return d.source.y; })
+        .attr("x2", function(d) { return d.target.x; })
+        .attr("y2", function(d) { return d.target.y; });
+
+    node.attr("cx", function(d) { return d.x; })
+        .attr("cy", function(d) { return d.y; });
+  });
+}
+
+var links = {};
+
+function process_links() {
+
+    if ( localStorage ) { 
+        localStorage.proposers = proposer_list;
+    }
+
+    for ( _proposers in proposer_list ) {
+        var proposers = proposer_list[_proposers];
+        for ( var _p0 = 0 ; _p0 < proposers.length ; _p0++ ) {
+            for ( var _p1 = 0 ; _p1 < proposers.length ; _p1++ ) {
+                var p0 = members[proposers[_p0]];
+                var p1 = members[proposers[_p1]];
+                if ( p0 < p1 ) {
+                    var key = "{ \"source\": "+p0+", \"target\": "+p1+"}";
+                    if ( links[key] ) {
+                        links[key]+=1;
+                    } else {
+                        links[key]=1;
+                    }
+                    
+                }
+            }            
+        }
+    }
+
+    var real_links = [];
+    var sum = 0,
+    std = 0,
+    count = 0;
+    for ( var key in links ) {
+        var value = links[key];
+        count += 1;
+        sum += value;
+    }
+
+    var avg = sum / count;
+    for ( var key in links ) {
+        var value = links[key];
+        std += (value-avg)*(value-avg);
+    }
+    std = std / count;
+    std = Math.sqrt(std);
+        
+    for ( var key in links ) {
+        var orig_value = links[key];
+        var value = ( orig_value - avg ) / std;
+
+        key = JSON.parse(key);
+        key.value = value;
+        key.orig_value = orig_value;
+        
+        if ( orig_value > avg ) { 
+            real_links.push(key);
+        }
+    }
+    console.log(avg);
+    links = real_links;
+    start_force();
+}
+
+var proposer_list = [];
+
+function parse_bill_data(url) {
+    
+    if ( localStorage ) { 
+        if ( localStorage.proposers ) {
+            proposer_list = localStorage.proposers;
+        }
+    }
+
+    console.log("getting "+url);
+    $("#bill-num").html( proposer_list.length );
+    $.get(OKNESSET+url, function(data) {
+
+        var re = /callback=[^&]+/;
+        var next = data.meta.next;
+        if ( next ) {
+            next = next.replace(re, "");
+            next = next.replace("&&","&");
+            next = next.replace("\?&","\?");
+            parse_bill_data(next);
+        } 
+
+        for ( var _bill = 0 ; _bill < data.objects.length ; _bill++ ) {
+            var bill = data.objects[_bill];
+            //console.log(bill.proposers);
+
+            var proposer_re = new RegExp(".+/([0-9]+)/");
+            var proposers = [];
+
+            if ( bill.proposers.length > 5 ) { continue; }
+
+            for ( var _proposer = 0 ; _proposer < bill.proposers.length ; _proposer++ ) {
+                var proposer = bill.proposers[_proposer];
+                proposer = proposer.match(proposer_re,proposer);
+                proposer = proposer[1];
+                //console.log(proposer);
+                proposer = parseInt(proposer);
+                proposers.push( proposer );
+            }               
+            //console.log(proposers);
+            
+            proposer_list.push( proposers );
+        }
+
+        if ( !next ) {
+            process_links();
+        }
+        
+    }, "jsonp");
+}
+
+var members = {};
+var nodes = [];
+
+function get_member_info() {
+    var url = OKNESSET + "/api/v2/member/?format=jsonp";
+    var url2 = OKNESSET + "/api/v2/member/set/";
+    $.get( url, function (data) {
+        for ( var _object in data.objects ) {
+            var member_rec = data.objects[_object];
+            url2 += member_rec.id +";";
+        }
+
+        url2 += "0/?format=jsonp";
+
+        $.get(url2, function(data) {
+            for ( var _object in data.objects ) {
+                var member_rec = data.objects[_object];
+                members[member_rec.id] = _object;
+            
+                var party_re = new RegExp(".+/([0-9]+)/");
+                var party = member_rec.party_url;
+                party = party.match(party_re,party);
+                party = party[1];
+                party = parseInt(party);
+
+                var member = { name : member_rec.name, group : party };
+                //console.log(member);
+                nodes.push( member );
+            }
+            parse_bill_data("/api/v2/bill/?format=jsonp&limit=100");
+        }, "jsonp");
+
+    }, "jsonp" );
+}
+
+$( function() {
+    get_member_info();
+} );
+
+
+</script>
