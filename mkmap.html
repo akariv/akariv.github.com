@@ -74,15 +74,35 @@ var links = {};
 function process_links() {
 
     if ( localStorage ) { 
-        localStorage.proposers = proposer_list;
+        localStorage.proposers = JSON.stringify(proposer_list);
+    }
+
+    function get_member_rec(id) {
+        member_rec = members[id];
+        if ( !member_rec.is_node ) {
+            member_rec.ordinal = nodes.length;
+            member_rec.is_node = true;
+
+            var party_re = new RegExp(".+/([0-9]+)/");
+            var party = member_rec.party_url;
+            party = party.match(party_re,party);
+            party = party[1];
+            party = parseInt(party);
+            
+            var member = { name : member_rec.name + " - " + member_rec.party_name, group : party };
+            //console.log(member);
+            nodes.push( member );
+        }
+        return member_rec.ordinal;
     }
 
     for ( _proposers in proposer_list ) {
         var proposers = proposer_list[_proposers];
         for ( var _p0 = 0 ; _p0 < proposers.length ; _p0++ ) {
             for ( var _p1 = 0 ; _p1 < proposers.length ; _p1++ ) {
-                var p0 = members[proposers[_p0]];
-                var p1 = members[proposers[_p1]];
+                var p0 = proposers[_p0];
+                var p1 = proposers[_p1];
+
                 if ( p0 < p1 ) {
                     var key = "{ \"source\": "+p0+", \"target\": "+p1+"}";
                     if ( links[key] ) {
@@ -121,8 +141,9 @@ function process_links() {
         key = JSON.parse(key);
         key.value = value;
         key.orig_value = orig_value;
-        
-        if ( orig_value > (avg+std) ) { 
+        if ( orig_value > (avg+2*std) ) { 
+            key.source = get_member_rec(key.source);
+            key.target = get_member_rec(key.target);
             real_links.push(key);
         }
     }
@@ -137,8 +158,9 @@ function parse_bill_data(url) {
     
     if ( localStorage ) { 
         if ( localStorage.proposers ) {
-            proposer_list = localStorage.proposers;
-            process_links();           
+            proposer_list = JSON.parse(localStorage.proposers);
+            process_links();    
+            return;
         }
     }
 
@@ -188,8 +210,17 @@ var members = {};
 var nodes = [];
 
 function get_member_info() {
+
+    if ( localStorage ) { 
+        if ( localStorage.members ) {
+            members = JSON.parse(localStorage.members);
+            parse_bill_data("/api/v2/bill/?format=jsonp&limit=100");
+        }
+    }
+
     var url = OKNESSET + "/api/v2/member/?format=jsonp";
     var url2 = OKNESSET + "/api/v2/member/set/";
+
     $.get( url, function (data) {
         for ( var _object in data.objects ) {
             var member_rec = data.objects[_object];
@@ -199,20 +230,17 @@ function get_member_info() {
         url2 += "0/?format=jsonp";
 
         $.get(url2, function(data) {
+
             for ( var _object in data.objects ) {
                 var member_rec = data.objects[_object];
-                members[member_rec.id] = _object;
-            
-                var party_re = new RegExp(".+/([0-9]+)/");
-                var party = member_rec.party_url;
-                party = party.match(party_re,party);
-                party = party[1];
-                party = parseInt(party);
-
-                var member = { name : member_rec.name, group : party };
-                //console.log(member);
-                nodes.push( member );
+                member_rec.is_node = false;
+                members[member_rec.id] = member_rec;
             }
+
+            if ( localStorage ) { 
+                localStorage.members = JSON.stringify(members);
+            }
+
             parse_bill_data("/api/v2/bill/?format=jsonp&limit=100");
         }, "jsonp");
 
