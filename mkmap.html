@@ -122,7 +122,7 @@ function process_links() {
         key.value = value;
         key.orig_value = orig_value;
         
-        if ( orig_value > avg ) { 
+        if ( orig_value > (avg+std) ) { 
             real_links.push(key);
         }
     }
@@ -162,7 +162,7 @@ function parse_bill_data(url) {
             var proposer_re = new RegExp(".+/([0-9]+)/");
             var proposers = [];
 
-            if ( bill.proposers.length > 5 ) { continue; }
+            if ( bill.proposers.length > 10 ) { continue; }
 
             for ( var _proposer = 0 ; _proposer < bill.proposers.length ; _proposer++ ) {
                 var proposer = bill.proposers[_proposer];
