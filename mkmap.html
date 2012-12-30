@@ -98,6 +98,7 @@ function process_links() {
 
     for ( _proposers in proposer_list ) {
         var proposers = proposer_list[_proposers];
+        if ( proposers.length > 10 ) { continue; }
         for ( var _p0 = 0 ; _p0 < proposers.length ; _p0++ ) {
             for ( var _p1 = 0 ; _p1 < proposers.length ; _p1++ ) {
                 var p0 = proposers[_p0];
@@ -183,8 +184,6 @@ function parse_bill_data(url) {
 
             var proposer_re = new RegExp(".+/([0-9]+)/");
             var proposers = [];
-
-            if ( bill.proposers.length > 10 ) { continue; }
 
             for ( var _proposer = 0 ; _proposer < bill.proposers.length ; _proposer++ ) {
                 var proposer = bill.proposers[_proposer];
