@@ -138,6 +138,7 @@ function parse_bill_data(url) {
     if ( localStorage ) { 
         if ( localStorage.proposers ) {
             proposer_list = localStorage.proposers;
+            process_links();           
         }
     }
 
