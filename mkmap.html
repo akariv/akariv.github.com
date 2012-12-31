@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
+<link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.2.2/css/bootstrap-combined.min.css" rel="stylesheet">
 <style>
 
 .node {
@@ -12,9 +13,41 @@
   stroke-opacity: .6;
 }
 
+div { text-align:right; }
+
+#std { text-align: center; }
 </style>
 <body>
-<div>Number of links: <div id="bill-num"></div></div>
+<div id="progress">
+    <div class="row">
+        <div class="span8"  style="text-align:right;direction:rtl;">טוען ח&quot;כים והצעות חוק...</div>
+    </div>
+    <div class="row">
+        <div class="progress progress-striped span8">
+          <div class="bar" style="width: 0%;"></div>
+        </div>
+    </div>
+</div>
+<div id="chart" style="display:none;">
+<div class="row">
+    <div class="span4">
+      <div class="btn" id="less-std"><i class="icon-chevron-left"></i>סתם חברים</div>
+      <div class="btn" id="more-std">הכי חברים<i class="icon-user icon-chevron-right"></i></div>
+    </div>
+    <div class="span4">
+      <div class="btn" id="less-proposers"><i class="icon-user icon-chevron-left"></i>הצעות חוק על אמת</div>
+      <div class="btn" id="more-proposers">סתם הצעות חוק<i class="icon-chevron-right"></i></div>
+    </div>
+</div>
+<br/>
+<div class="row">
+    <div class="span3" style="text-align:right;">אחוזונים עליונים</div>
+    <div class="span1" id="std">STD</div>
+    <div class="span3" style="text-align:right;">יוזמים לכל היותר</div>
+    <div class="span1" id="prop">PROP</div>
+</div>
+</div>
+
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
 <script src="http://d3js.org/d3.v3.min.js"></script>
 <script>
@@ -35,70 +68,86 @@ var svg = d3.select("body").append("svg")
 
 var OKNESSET = "http://oknesset.org";
 
+var STD = 5;
+var PROP = 5;
+
 function start_force(data) {
-  force
-      .nodes(nodes)
-      .links(links)
-      .start();
+    
+    force
+        .nodes(nodes)
+        .links(links);
+    
+    var link = svg.selectAll("line.link")
+        .data(links);
+    link.enter().insert("line",".node")
+        .attr("class", "link")
+        .style("stroke-width", function(d) { return Math.sqrt(d.value); });
+    link.exit().remove();
+    
+    var node = svg.selectAll("circle.node")
+        .data(nodes);
+    
+    node.enter().insert("circle")
+        .attr("class", "node")
+        .attr("r", 5)
+        .style("fill", function(d) { return color(d.party); })
+        .call(force.drag);
 
-  var link = svg.selectAll("line.link")
-      .data(links)
-    .enter().append("line")
-      .attr("class", "link")
-      .style("stroke-width", function(d) { return Math.sqrt(d.value); });
+    node.exit()
+        .transition()
+        .attr("r", 0).remove();
+    
+    node.append("title")
+        .text(function(d) { return d.fullname; });
+    
+    force.on("tick", function() {
+        link.attr("x1", function(d) { return d.source.x; })
+            .attr("y1", function(d) { return d.source.y; })
+            .attr("x2", function(d) { return d.target.x; })
+            .attr("y2", function(d) { return d.target.y; });
+        
+        node.attr("cx", function(d) { return d.x; })
+            .attr("cy", function(d) { return d.y; });
+    });
 
-  var node = svg.selectAll("circle.node")
-      .data(nodes)
-    .enter().append("circle")
-      .attr("class", "node")
-      .attr("r", 5)
-      .style("fill", function(d) { return color(d.group); })
-      .call(force.drag);
-
-  node.append("title")
-      .text(function(d) { return d.name; });
-
-  force.on("tick", function() {
-    link.attr("x1", function(d) { return d.source.x; })
-        .attr("y1", function(d) { return d.source.y; })
-        .attr("x2", function(d) { return d.target.x; })
-        .attr("y2", function(d) { return d.target.y; });
-
-    node.attr("cx", function(d) { return d.x; })
-        .attr("cy", function(d) { return d.y; });
-  });
+    force.start();
 }
 
 var links = {};
+var _links = {};
 
 function process_links() {
+
+    $("#progress").css("display","none");
+    $("#chart").css("display","inherit");
+    
+    $("#prop").html(PROP);
 
     if ( localStorage ) { 
         localStorage.proposers = JSON.stringify(proposer_list);
     }
 
+    /*nodes = [];
+    for ( var _member in members ) {
+        members[_member].is_node = false;
+    }*/
+
     function get_member_rec(id) {
         member_rec = members[id];
         if ( !member_rec.is_node ) {
-            member_rec.ordinal = nodes.length;
             member_rec.is_node = true;
-
-            var party_re = new RegExp(".+/([0-9]+)/");
-            var party = member_rec.party_url;
-            party = party.match(party_re,party);
-            party = party[1];
-            party = parseInt(party);
-            
-            var member = { name : member_rec.name + " - " + member_rec.party_name, group : party };
-            //console.log(member);
-            nodes.push( member );
+            nodes.push( member_rec );
         }
-        return member_rec.ordinal;
+        return member_rec;
     }
 
-    for ( _proposers in proposer_list ) {
+    for ( var _key in _links ) {
+        _links[_key].value = null;
+    }
+
+    for ( var _proposers in proposer_list ) {
         var proposers = proposer_list[_proposers];
-        if ( proposers.length > 10 ) { continue; }
+        if ( proposers.length > PROP ) { continue; }
         for ( var _p0 = 0 ; _p0 < proposers.length ; _p0++ ) {
             for ( var _p1 = 0 ; _p1 < proposers.length ; _p1++ ) {
                 var p0 = proposers[_p0];
@@ -106,54 +155,62 @@ function process_links() {
 
                 if ( p0 < p1 ) {
                     var key = "{ \"source\": "+p0+", \"target\": "+p1+"}";
-                    if ( links[key] ) {
-                        links[key]+=1;
-                    } else {
-                        links[key]=1;
+                    if ( !_links[key] ) {
+                        _links[key] = { value: 0 };
                     }
-                    
+                    _links[key].value+=1;
+                    _links[key].source = p0;
+                    _links[key].target = p1;
                 }
             }            
         }
     }
 
-    var real_links = [];
+    links = [];
     var sum = 0,
     std = 0,
     count = 0;
-    for ( var key in links ) {
-        var value = links[key];
+    for ( var key in _links ) {
+        var value = _links[key].value;
+        if ( !value ) { continue; }
+
         count += 1;
         sum += value;
     }
 
     var avg = sum / count;
-    for ( var key in links ) {
-        var value = links[key];
+    for ( var key in _links ) {
+        var value = _links[key].value;
+        if ( !value ) { continue; }
+
         std += (value-avg)*(value-avg);
     }
     std = std / count;
     std = Math.sqrt(std);
         
-    for ( var key in links ) {
-        var orig_value = links[key];
+    for ( var key in _links ) {
+        var link = _links[key];
+        var orig_value = link.value;
+        if ( !orig_value ) { continue; }
+
         var value = ( orig_value - avg ) / std;
 
-        key = JSON.parse(key);
-        key.value = value;
-        key.orig_value = orig_value;
-        if ( orig_value > (avg+2*std) ) { 
-            key.source = get_member_rec(key.source);
-            key.target = get_member_rec(key.target);
-            real_links.push(key);
+        if ( orig_value > (avg+STD*std*0.2) ) { 
+            link.source = get_member_rec(link.source);
+            link.target = get_member_rec(link.target);
+            link.value = value;
+            links.push(link);
         }
     }
+
+    $("#std").html( (100*links.length/Object.keys(_links).length).toFixed(1) )
+
     console.log(avg);
-    links = real_links;
     start_force();
 }
 
 var proposer_list = [];
+var BILL_TOTAL_COUNT = 4200;
 
 function parse_bill_data(url) {
     
@@ -165,8 +222,9 @@ function parse_bill_data(url) {
         }
     }
 
-    console.log("getting "+url);
-    $("#bill-num").html( proposer_list.length );
+    console.log("getting "+url+ " W:"+proposer_list.length+" "+BILL_TOTAL_COUNT);
+    $("#progress .bar").css("width", (100.0 * (100+proposer_list.length) / (100+BILL_TOTAL_COUNT))+"%");
+    $("#bill-num").html(  );
     $.get(OKNESSET+url, function(data) {
 
         var re = /callback=[^&]+/;
@@ -177,6 +235,7 @@ function parse_bill_data(url) {
             next = next.replace("\?&","\?");
             parse_bill_data(next);
         } 
+        BILL_TOTAL_COUNT = data.meta.total_count;
 
         for ( var _bill = 0 ; _bill < data.objects.length ; _bill++ ) {
             var bill = data.objects[_bill];
@@ -214,6 +273,7 @@ function get_member_info() {
         if ( localStorage.members ) {
             members = JSON.parse(localStorage.members);
             parse_bill_data("/api/v2/bill/?format=jsonp&limit=100");
+            return;
         }
     }
 
@@ -232,7 +292,16 @@ function get_member_info() {
 
             for ( var _object in data.objects ) {
                 var member_rec = data.objects[_object];
-                member_rec.is_node = false;
+                
+                var party_re = new RegExp(".+/([0-9]+)/");
+                var party = member_rec.party_url;
+                party = party.match(party_re,party);
+                party = party[1];
+                party = parseInt(party);
+                
+                member_rec.fullname = member_rec.name + " - " + member_rec.party_name;
+                member_rec.party = party;
+
                 members[member_rec.id] = member_rec;
             }
 
@@ -248,6 +317,11 @@ function get_member_info() {
 
 $( function() {
     get_member_info();
+
+    $("#more-std").click( function() { STD+=1; process_links(); } );
+    $("#less-std").click( function() { STD-=1; process_links(); } );
+    $("#more-proposers").click( function() { PROP+=1; process_links(); } );
+    $("#less-proposers").click( function() { if (PROP > 2) { PROP-=1; } process_links(); } );
 } );
 
 
