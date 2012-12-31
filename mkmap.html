@@ -158,7 +158,7 @@ function process_links() {
                     if ( !_links[key] ) {
                         _links[key] = { value: 0 };
                     }
-                    _links[key].value+=1;
+                    _links[key].value+=1.0/(proposers.length-1);
                     _links[key].source = p0;
                     _links[key].target = p1;
                 }
