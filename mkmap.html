@@ -83,15 +83,15 @@ function start_force(data) {
     
     var link = svg.selectAll(".link")
         .data(links);
-    var linkEnter = link.enter().insert("g")
+    var linkEnter = link.enter().insert("g",".node")
         .attr("class", "link");
-    linkEnter.append("line")
+    linkEnter.insert("line")
+        .style("stroke-width", function(d) { return Math.sqrt(d.value)+1; });
+    linkEnter.insert("line")
         .style("stroke-opacity", 0.1)
         .style("stroke-linecap","round")
         .style("stroke", function(d) { return color(d.source.party); })
         .style("stroke-width", function(d) { return (d.source.party == d.target.party) ? 20 : 0; } );
-    linkEnter.append("line")
-        .style("stroke-width", function(d) { return Math.sqrt(d.value)+1; });
     link.exit().remove();
     
     var node = svg.selectAll(".node")
@@ -109,9 +109,10 @@ function start_force(data) {
         .style("fill", function(d) { return color(d.party); })
         .style("stroke", "none")
         .style("cursor", "pointer")
-        .call(force.drag);
     nodeEnter.append("title")
         .text(function(d) { return d.fullname; });
+
+    node.call(force.drag);
 
     node.exit().remove();
     
