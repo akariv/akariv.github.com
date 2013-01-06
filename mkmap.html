@@ -29,15 +29,23 @@ div { text-align:right; }
     </div>
 </div>
 <div id="chart" style="display:none;">
-<div class="row">
-    <div class="span4">
+<div style="text-align:right;direction:rtl;position:absolute;top:0;right:30px;z-index:-1">
+    <p><strong>מה רואים פה?</strong></p>
+    <ul>
+    <li>כל נקודה מייצגת ח&quot;כ. הצבע מייצג את המפלגה. אם עומדים על הח&quot;כ אפשר לראות את השם שלו/שלה ואת שם המפלגה.</li>
+    <li>קו בין שתי נקודות מייצג שישנן הצעות חוק משותפות לשני הח&quot;כים (כאלו ששני הח&quot;כים יזמו במשותף)</li>
+    <li>קו עבה יותר מציין שיש יותר הצעות חוק.</li>
+    <li>ניתן לבחור אם מציגים את כל הקשרים (<i>סתם חברים</i>) או רק קשרים חזקים (<i>הכי חברים</i>)</div>
+    </ul>
+<div class="row span8">
+    <div class="span3" style="text-align:right;">אחוזונים עליונים</div>
+    <div class="span1" id="std">STD</div>
+    <div>
       <div class="btn" id="less-std"><i class="icon-chevron-left"></i>סתם חברים</div>
       <div class="btn" id="more-std">הכי חברים<i class="icon-user icon-chevron-right"></i></div>
     </div>
 </div>
 <div class="row">
-    <div class="span3" style="text-align:right;">אחוזונים עליונים</div>
-    <div class="span1" id="std">STD</div>
 </div>
 </div>
 
@@ -64,8 +72,8 @@ var svg = d3.select("body").append("svg")
 
 var OKNESSET = "http://oknesset.org";
 
-var STD = 5;
-var PROP = 5;
+var STD = 10;
+var PROP = 120;
 
 function start_force(data) {
     
