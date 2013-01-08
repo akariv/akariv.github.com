@@ -68,7 +68,7 @@ div { text-align:right; }
 </div>
 
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
-<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="//d3js.org/d3.v3.min.js"></script>
 <script>
 
 var width = 960,
@@ -110,6 +110,8 @@ function start_force(data) {
         .style("stroke-linecap","round")
         .style("stroke", function(d) { return color(d.source.party); })
         .style("stroke-width", function(d) { return (d.source.party == d.target.party) ? 20 : 0; } );
+    linkEnter.append("title")
+        .text(function(d) { return "ישנן " + d.count + " הצעות חוק משותפות" + (d.count2 == 0 ? "" : ", מתוכן "+d.count2+" הצעות של שני ח\"כים אלו בלבד"); }); //"
     link.exit().remove();
     
     var node = svg.selectAll(".node")
@@ -118,15 +120,32 @@ function start_force(data) {
     var nodeEnter = node.enter().insert("g")
                         .attr("class", "node");
 
-    nodeEnter.append("circle")
+/*    nodeEnter.append("circle")
         .attr("r", 0)
         .style("fill", function(d) { return color(d.party); })
-        .style("fill-opacity", 0.1)
+        .style("fill-opacity", 0.1)*/
     nodeEnter.append("circle")
-        .attr("r",5)
+        .attr("r",7)
         .style("fill", function(d) { return color(d.party); })
         .style("stroke", "none")
         .style("cursor", "pointer")
+    nodeEnter.append("image")
+        .attr("xlink:href","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJ\nbWFnZVJlYWR5ccllPAAABMxJREFUeNq8V11MHFUUvvOzfzOzLLtsl21qwC1sV2hZYGFBGtDQWtOm\nL22kTTT1xTY1pmljNKkv/j7piw8+G9RojPXFV0kwpsZg0laWApWkSdOlBOImKFXS/WVn1++MO5Nl\nO+AUpHdymDs7c+/5zrnnfOfAlctl9sdfy6x6xKI9bKPBcRzjBf64IAhnBV5oYhwLYY+kqqo/qUV1\ntFQuzSWmJ5mV4a/fxTgzAN3R2MOKmaa4yW63f+10OgcdDgcTRVEDVCqV2NraGsvlcmo+l/8E88uT\n07+qVgCIVpCSclgclBX5mizJQafLyWw2G+N53gBAUigUhEwm80YmndmNZS9Z2Zs3/bW8XjieYx6P\n5zu32x1U3Aoj6wFIU65tAiDkDZfLxfANk2X5xYH4wfNbB7DefLJ2gIQUkGINI46uVmiQZyRZYn6/\n/8N4d5+wJQDlqovneNba0vq6w+nQLDVTbAYCwehTFOXpbR8BAo/JitS/meW1QkdjE20s1hM79l8A\nxI08UJ12HM/X0V230FLg4ntfg++J7QchRjDYuGbF8nWCq7ExkN52EFJ6hcPhO3R/FACUFUPPDE1s\nOwjBcOzEyROfIw0tKyeww4eGi5GnImPbPoKSWkIQyl+++tr5P60C8O/ys1OnR77ADitb80CNNV0d\n3YWBgwNnLly8UKJU1JnPTEj5O++9fS/QGHjLSrBaomIUGSpQY4mZyZdbWvaOXvnmW+f1a9e149EH\nHdHhI4fZyMgLd0FEz1mxXssWs2J0oK2DCMiF3P8YPHAWlo3jKE7B+uzUbKIdn7ybzWZPLi4u2jUr\nkPOh0JMpTEchH0EedB7oasf675HEdgC9fPPW1FeWq2G0vdOOgvMDOH+IWK1YLDJUuavZXPYVvE4S\nKU3NJBTMI5Ulhd6u+GxRLWoxA6BHJEm6YnfYfcQH+XyeAfA5rBm1BCAe6/sUvH9O5346W2zActkc\nld1xPN9GhMxSlcT4G3MP7gqURfD9syjZEcklMQDQCIlKNSpkKZ1OH4UnxjcFgIAbVGTlZyooZL0R\nBzhv8gRtRnOdF7Rs4f5lPgIrCiITbaLGAxSwelCTF7A+dX/lfnhmbvqBaT/Q0RYVGvwNn9FGJNXU\nS5vBMm3j2uJjUDZ1S5UeQVesj8pRBuvq6j7A45umaQiXn8YZhknJRoVHV6JZK4qG0HO1xWbryAB8\ncym6v9NnCsDr876vK98s17cqFS+J/gb/xYfSsHN/Vxe6nSkKPN2SnRgUR9h/JZVKBVK/p1RDU2hv\n6BIFkF52d0pof2SUD71lbB0T4vVR6v0epeZvZejZ0tzUdAaPN0Q9+r0N3kb0+TsOQAeBP8OGB9BA\nNuULeV5wPCYAuIprxT1GFvTGeyLVubvTQsQFYpIMDyhud6CWOHZykB4wqmh4YF8knEVuPhbrdWkO\nNavVPNCK+dWFewt7JiZ+YVOJBJuZmaUC8r9ZHQgE0KZ3s77+ftbb28PqvfXjqAXP1xYjKq/HIYcg\ng8vLy57k3SSbn59n88l5trS0xNIVUCARtrq6aigI7g4y8LyhjDojNC/U0KJXCDGX5FrAqx8hY5X7\n8obluG1fu/Yf0W+3b1GktlcJecqjcxfEV7UsWdUFkbIlyCzkJmSOmhSzhuQfAQYAXSMPclR+MogA\nAAAASUVORK5CYII=")
+        .attr("x", -6)
+        .attr("y", -6)
+        .attr("width", 12)
+        .attr("height", 12)
+        .style("opacity",0.5);
+    nodeEnter.append("text")
+        .attr("dx", 0)
+        .attr("dy", "16px")
+        .style("fill", function(d) { return color(d.party); } )
+        .style("stroke", function(d) { return d3.rgb(color(d.party)).darker().toString(); } )
+        .style("stroke-width","0.5px")
+        .style("pointer-events","none")
+        .style("font","10px sans-serif")
+        .style("text-anchor","middle")
+        .text(function(d) { return d.name });
     nodeEnter.append("title")
         .text(function(d) { return d.fullname; });
 
@@ -142,9 +161,7 @@ function start_force(data) {
             .attr("x2", function(d) { return d.target.x; })
             .attr("y2", function(d) { return d.target.y; });
         
-        node.selectAll("circle")
-            .attr("cx", function(d) { return d.x; })
-            .attr("cy", function(d) { return d.y; });
+        node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
     });
 
     force.start();
@@ -193,9 +210,13 @@ function process_links() {
                 if ( p0 < p1 ) {
                     var key = "{ \"source\": "+p0+", \"target\": "+p1+"}";
                     if ( !_links[key] ) {
-                        _links[key] = { value: 0 };
+                        _links[key] = { value: 0, count: 0, count2: 0 };
                     }
                     _links[key].value+=1.0/(proposers.length-1);
+                    _links[key].count+=1;
+                    if ( proposers.length == 2 ) {
+                          _links[key].count2+=1;
+                    }
                     _links[key].source = p0;
                     _links[key].target = p1;
                 }
