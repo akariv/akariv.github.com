@@ -49,14 +49,15 @@ div { text-align:right; }
     </div>
 </div>
 <div id="chart" style="display:none;">
-<div style="text-align:right;direction:rtl;position:absolute;top:30px;left:30px;padding:10px;background-color:#fff;z-index:3;border:solid 1px;display:none;" id="help-text">
+<div style="text-align:right;direction:rtl;position:absolute;top:10px;left:10px;padding:10px;background-color:#fff;z-index:3;border:solid 1px;display:none;" id="help-text">
     <p><strong>מה רואים פה?</strong></p>
     <ul style="list-style-position:inside">
     <li>כל נקודה מייצגת ח&quot;כ. הצבע מייצג את המפלגה. אם עומדים על הח&quot;כ אפשר לראות את השם שלו/שלה ואת שם המפלגה.</li>
     <li>קו בין שתי נקודות מייצג שישנן הצעות חוק משותפות לשני הח&quot;כים (כאלו ששני הח&quot;כים יזמו במשותף)</li>
     <li>קו עבה יותר מציין שיש יותר הצעות חוק.</li>
-    <li>ניתן לבחור אם מציגים את כל הקשרים (<i>סתם חברים</i>) או רק קשרים חזקים (<i>הכי חברים</i>)</div>
+    <li>ניתן לבחור אם מציגים את כל הקשרים (<i>סתם חברים</i>) או רק קשרים חזקים (<i>הכי חברים</i>)</li>
     </ul>
+    <p><strong>ניתוחים של הויזואליזציה:</strong> <a href="http://www.facebook.com/photo.php?fbid=513359428697900&set=a.181257155241464.42928.114171195283394&type=1&theater">גל חן</a>, <a href="http://blogs.haaretz.co.il/talschneider/396/">טל שניידר</a>
 </div>
 <div class="icon-question-sign" style="position:absolute;top:5px;left:5px;" id="help-icon"></div>
 <div class="row">
@@ -379,8 +380,8 @@ $( function() {
     $("#less-std").click( function() { STD-=1; process_links(); } );
     $("#more-proposers").click( function() { PROP+=1; process_links(); } );
     $("#less-proposers").click( function() { if (PROP > 2) { PROP-=1; } process_links(); } );
-    $("#help-icon").hover( function() { $("#help-text").css("display","inherit"); },
-                           function() { $("#help-text").css("display","none"); } );
+    $("#help-icon,#help-text").hover( function() { $("#help-text").css("display","inherit"); },
+                                      function() { $("#help-text").css("display","none"); } );
                            
     process_links();
     
