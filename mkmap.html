@@ -49,31 +49,31 @@ div { text-align:right; }
     </div>
 </div>
 <div id="chart" style="display:none;">
-<div style="text-align:right;direction:rtl;position:absolute;top:0;right:30px;z-index:-1">
+<div style="text-align:right;direction:rtl;position:absolute;top:30px;left:30px;padding:10px;background-color:#fff;z-index:3;border:solid 1px;display:none;" id="help-text">
     <p><strong>מה רואים פה?</strong></p>
-    <ul>
+    <ul style="list-style-position:inside">
     <li>כל נקודה מייצגת ח&quot;כ. הצבע מייצג את המפלגה. אם עומדים על הח&quot;כ אפשר לראות את השם שלו/שלה ואת שם המפלגה.</li>
     <li>קו בין שתי נקודות מייצג שישנן הצעות חוק משותפות לשני הח&quot;כים (כאלו ששני הח&quot;כים יזמו במשותף)</li>
     <li>קו עבה יותר מציין שיש יותר הצעות חוק.</li>
     <li>ניתן לבחור אם מציגים את כל הקשרים (<i>סתם חברים</i>) או רק קשרים חזקים (<i>הכי חברים</i>)</div>
     </ul>
-<div class="row span8">
-    <div class="span4" style="text-align:right;">מוצגים ה-<span id="std"></span>% החזקים ביותר מכלל הקשרים בין הח&quot;כים</div>
+</div>
+<div class="icon-question-sign" style="position:absolute;top:5px;left:5px;" id="help-icon"></div>
+<div class="row">
+    <div style="text-align:right;">מוצגים ה-<span id="std"></span>% החזקים ביותר מכלל הקשרים בין הח&quot;כים</div>
     <div>
       <div class="btn" id="less-std"><i class="icon-chevron-left"></i>סתם חברים</div>
       <div class="btn" id="more-std">הכי חברים<i class="icon-user icon-chevron-right"></i></div>
     </div>
 </div>
-<div class="row">
-</div>
-</div>
+
 
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
 <script src="//d3js.org/d3.v3.min.js"></script>
 <script>
 
-var width = 960,
-    height = 500;
+var width = $(window).width(),
+    height = $(window).height();
 
 var color = d3.scale.category20();
 
@@ -379,7 +379,9 @@ $( function() {
     $("#less-std").click( function() { STD-=1; process_links(); } );
     $("#more-proposers").click( function() { PROP+=1; process_links(); } );
     $("#less-proposers").click( function() { if (PROP > 2) { PROP-=1; } process_links(); } );
-
+    $("#help-icon").hover( function() { $("#help-text").css("display","inherit"); },
+                           function() { $("#help-text").css("display","none"); } );
+                           
     process_links();
     
 } );
