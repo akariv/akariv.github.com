@@ -258,7 +258,7 @@ function process_links() {
         if ( orig_value > (avg+STD*std*0.2) ) { 
             link.source = get_member_rec(link.source);
             link.target = get_member_rec(link.target);
-            link.key = link.source+"->"+link.target
+            link.key = link.source.id+"->"+link.target.id
             link.value = value;
             links.push(link);
         }
